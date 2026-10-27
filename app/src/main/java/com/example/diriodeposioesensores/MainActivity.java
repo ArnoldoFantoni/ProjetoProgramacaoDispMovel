@@ -2,6 +2,7 @@ package com.example.diriodeposioesensores;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -23,24 +24,39 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensorManager;
     private Sensor sensorLuminosidade;
-
     private LocationManager locationManager;
+    private BancoHelper bancoHelper;
 
     private TextView txtSensor;
     private TextView txtGps;
     private Button btnSalvar;
+    private IndicadorLuzView viewCustomizada;
 
-    private String ultimaLocalizacao = "Aguardando GPS...";
+    private float valorLuzAtual = 0f;
+    private String stringGpsAtual = "Aguardando GPS...";
+
+    private Button btnVerHistorico;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Ligar componentes visuais
+        // 1. Ligar componentes da tela
         txtSensor = findViewById(R.id.txtSensor);
         txtGps = findViewById(R.id.txtGps);
         btnSalvar = findViewById(R.id.btnSalvar);
+        viewCustomizada = findViewById(R.id.viewCustomizada);
+        btnVerHistorico = findViewById(R.id.btnVerHistorico);
+
+        //-- intenção para tela do histórico.
+        btnVerHistorico.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, HistoricoActivity.class);
+            startActivity(intent);
+        });
+
+        // Inicializar o Banco de Dados SQLite
+        bancoHelper = new BancoHelper(this);
 
         // 2. Configurar Sensor de Luz
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -48,46 +64,43 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             sensorLuminosidade = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         }
 
-        // 3. Configurar Geolocalização (GPS)
+        // 3. Configurar GPS e Permissões
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        // Verificar e solicitar permissão de GPS se o usuário ainda não permitiu
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 100);
         } else {
             iniciarGPS();
         }
 
-        // 4. Ação do Botão Salvar
+        // 4. Ação do Botão de Salvar no SQLite
         btnSalvar.setOnClickListener(v -> {
-            Toast.makeText(this, "Dados prontos para salvar no SQLite!", Toast.LENGTH_SHORT).show();
+            boolean salvo = bancoHelper.inserirRegistro(valorLuzAtual, stringGpsAtual);
+            if (salvo) {
+                Toast.makeText(this, "Registro salvo no SQLite com sucesso!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Erro ao salvar no banco de dados.", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
     private void iniciarGPS() {
         try {
             if (locationManager != null) {
-                // Pede atualizações de localização via GPS
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 5, this);
-                Toast.makeText(this, "Buscando sinal de GPS...", Toast.LENGTH_SHORT).show();
             }
         } catch (SecurityException e) {
             e.printStackTrace();
         }
     }
 
-    // Tratamento da resposta da permissão do usuário
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             iniciarGPS();
-        } else {
-            Toast.makeText(this, "Permissão de GPS negada!", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // Métodos do Sensor
     @Override
     protected void onResume() {
         super.onResume();
@@ -107,31 +120,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    // Leitura do Sensor em tempo real
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
-            float valorLuz = event.values[0];
-            txtSensor.setText("Sensor (Luz): " + valorLuz + " lx");
+            valorLuzAtual = event.values[0];
+
+            // Mantemos apenas a linha correta que atualiza o texto:
+            txtSensor.setText("Sensor (Luz): " + valorLuzAtual + " lx");
+
+            // Atualiza a nossa View Customizada dinamicamente
+            viewCustomizada.setIntensidadeLuz(valorLuzAtual);
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
-    // Métodos do GPS (LocationListener)
+    // Leitura do GPS
     @Override
     public void onLocationChanged(@NonNull Location location) {
         double lat = location.getLatitude();
         double lon = location.getLongitude();
-        ultimaLocalizacao = "Lat: " + lat + " | Lon: " + lon;
-        txtGps.setText("GPS: " + ultimaLocalizacao);
+        stringGpsAtual = "Lat: " + lat + " | Lon: " + lon;
+        txtGps.setText("GPS: " + stringGpsAtual);
     }
 
     @Override
-    public void onProviderEnabled(@NonNull String provider) {} // No Android mais antigo pode ser String provider
-
-    @Override
     public void onProviderDisabled(@NonNull String provider) {
-        txtGps.setText("GPS desativado no aparelho.");
+        txtGps.setText("GPS desativado.");
     }
 }

@@ -35,12 +35,12 @@ android:padding="24dp">
     android:layout_marginBottom="24dp"/>
 
 <!-- Requisito 1: View Customizada (Espaço reservado para nossa classe customizada) -->
-<View
-    android:id="@+id/viewCustomizada"
-    android:layout_width="match_parent"
-    android:layout_height="80dp"
-    android:background="#E0E0E0"
-    android:layout_marginBottom="24dp"/>
+<com.example.diriodeposioesensores.IndicadorLuzView
+        android:id="@+id/viewCustomizada"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#F0F0F0"
+        android:layout_marginBottom="24dp"/>
 
 <!-- Botão para Salvar no SQLite (Requisito 2) -->
 <Button
@@ -48,6 +48,14 @@ android:padding="24dp">
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:text="Salvar Registro no Banco"
+    android:textSize="16sp"/>
+
+<!-- Botão para abrir a tela de Histórico (SQLite) -->
+<Button
+    android:id="@+id/btnVerHistorico"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Ver Histórico (SQLite)"
     android:textSize="16sp"/>
 
 </LinearLayout>
