@@ -34,11 +34,3 @@ Responsável por gerenciar a criação do banco de dados (`diario_sensores.db`),
 Gerencia a segunda tela do aplicativo. Abre o banco de dados no modo de leitura, executa uma consulta (`SELECT * FROM registros`) utilizando um `Cursor` para varrer os dados, formata as informações e as exibe em um `TextView` com rolagem.
 
 ---
-
-## ⚙️ Como Executar o Projeto
-1. Clone o repositório ou baixe o código-fonte em formato ZIP.
-2. Abra o **Android Studio**.
-3. Selecione a opção **Open an Existing Project** e a pasta do projeto.
-4. Aguarde o Gradle sincronizar as dependências.
-5. Conecte um dispositivo físico com o modo desenvolvedor ativado ou inicie um **Emulador Android** (Virtual Device).
-6. Clique no botão **Run (▶)** para compilar e instalar o aplicativo.
