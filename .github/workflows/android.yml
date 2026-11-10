@@ -21,13 +21,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configurar Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Aceitar licenças do Android SDK
+        run: |
+          set -o pipefail
+          yes | sdkmanager --licenses
 
       - name: Instalar Android SDK 37
         run: sdkmanager "platforms;android-37"
@@ -35,10 +37,10 @@ jobs:
       - name: Dar permissão ao Gradle Wrapper
         run: chmod +x ./gradlew
 
-      - name: Compilar APK de debug
+      - name: Compilar APK
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Disponibilizar APK para download
+      - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
