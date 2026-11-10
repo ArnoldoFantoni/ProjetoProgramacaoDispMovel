@@ -16,6 +16,10 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
@@ -26,22 +30,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Aceitar licenças e instalar SDK
+      - name: Localizar Android SDK
         shell: bash
         run: |
-          set -euo pipefail
-
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager | sort -V | tail -n 1)
 
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager não encontrado!"
+            exit 1
+          fi
+
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
           echo "SDK Manager encontrado: $SDKMANAGER"
 
-          yes | "$SDKMANAGER" --licenses || true
+      - name: Aceitar licenças do Android SDK
+        run: yes | sdkmanager --licenses
 
-          "$SDKMANAGER" "platforms;android-37"
+      - name: Instalar Android SDK 37
+        run: sdkmanager "platforms;android-37"
 
       - name: Dar permissão ao Gradle Wrapper
         run: chmod +x ./gradlew
