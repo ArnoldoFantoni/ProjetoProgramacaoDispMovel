@@ -26,13 +26,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Aceitar licenças do Android SDK
-        run: |
-          set -o pipefail
-          yes | sdkmanager --licenses
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Instalar Android SDK 37
-        run: sdkmanager "platforms;android-37"
+      - name: Aceitar licenças e instalar SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f -name sdkmanager | sort -V | tail -n 1)
+
+          echo "SDK Manager encontrado: $SDKMANAGER"
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" "platforms;android-37"
 
       - name: Dar permissão ao Gradle Wrapper
         run: chmod +x ./gradlew
